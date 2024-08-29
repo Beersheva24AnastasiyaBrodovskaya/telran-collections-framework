@@ -3,11 +3,14 @@ package telran.util;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-
+import java.util.Objects;
+import java.util.function.Predicate;
+@SuppressWarnings("unchecked")
 public class ArrayList<T> implements List<T> {
     private static final int DEFAULT_CAPACITY = 16;
     private Object [] array;
-    private int size=0;
+    private int size = 0;
+    
     public ArrayList(int capacity) {
         array = new Object[capacity];
     }
@@ -16,26 +19,20 @@ public class ArrayList<T> implements List<T> {
     }
     @Override
     public boolean add(T obj) {
+        reallocationIfNeeded();
+        array[size++] = obj;
+        return true;
+    }
+    private void reallocationIfNeeded() {
         if(size == array.length) {
             reallocate();
         }
-        array[size++] = obj;
-        return true;
     }
 
     private void reallocate() {
           array = Arrays.copyOf(array, array.length * 2);
     }
-    @Override
-    public boolean remove(T pattern) {
-        int index=indexOf(pattern);
-        if (index>=0){
-            remove(index);
-        }
-
-        return index >= 0;
-       
-    }
+   
 
     @Override
     public int size() {
@@ -47,91 +44,99 @@ public class ArrayList<T> implements List<T> {
         return size == 0;
     }
 
-    @Override
-    public boolean contains(T pattern) {
-       return indexOf(pattern) >= 0;
-    }
+   
 
     @Override
     public Iterator<T> iterator() {
-        return new Iterator<T>(){
-            private int cur = 0;
-
-            @Override
-            @SuppressWarnings("unchecked")
-            public T next(){
-                if (!hasNext()){
-                    throw new NoSuchElementException();
-                }
-                return (T) array[cur++];
-            }
-        };
+        return new ArrayListIterator();
     }
 
     @Override
     public void add(int index, T obj) {
-        if (index < 0 || index > size) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-
-        if (size == array.length) {
-            reallocate();
-        }
-
-        System.arraycopy(array, index, array, index + 1, size++ - index);
+        checkIndex(index, true);
+        reallocationIfNeeded();
+        System.arraycopy(array, index, array, index + 1, size - index);
         array[index] = obj;
+        size++;
     }
 
+   
     @Override
-    @SuppressWarnings("unchecked")
     public T remove(int index) {
-        T removedItem = (T) array[index];
-        System.arraycopy(array, index + 1, array, index, --size - index);
-
-        return removedItem;
+        checkIndex(index, false);
+        T res = (T)array[index];
+        size--;
+        System.arraycopy(array, index + 1, array, index, size - index);
+        array[size] = null;
+        return res;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public T get(int index) {
-        if (index < 0 || index > size) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-
+        checkIndex(index, false);
         return (T) array[index];
     }
 
-
     @Override
     public int indexOf(T pattern) {
-        int res = -1;
-        int i = 0;
-        while (res < 0 && i < size) {
-            if (isEqual(pattern, array[i])) {
-                res = i;
-            }
-            i++;
+        int index = 0;
+        while(index < size && !Objects.equals(array[index], pattern)) {
+            index++;
         }
-
-        return res;
+        return index == size ? -1 : index;
     }
-
 
     @Override
     public int lastIndexOf(T pattern) {
-        int res = -1;
-        int i = size;
-        while (res < 0 && i > 0) {
-            i--;
-            if (isEqual(pattern, array[i])) {
-                res = i;
+        int index = size - 1;
+        while(index >= 0 && !Objects.equals(array[index], pattern)) {
+            index--;
+        }
+        return index;
+    }
+    @Override
+    public boolean removeIf(Predicate<T> predicate) {
+       int indexTo = 0;
+       Predicate<T> negPred = predicate.negate(); //not to apply "!" operator at each iteration
+       for(int currentIndex = 0; currentIndex < size; currentIndex++) {
+        T current = (T)array[currentIndex];
+            if(negPred.test(current)) {
+                array[indexTo++] = current;
             }
+       }
+       Arrays.fill(array,indexTo, size, null);
+       boolean res = indexTo < size;
+       size = indexTo;
+       return res;
+    }
+
+    private class ArrayListIterator implements Iterator<T> {
+        int currentIndex = 0;
+        private boolean flNext = false;
+        @Override
+        public boolean hasNext() {
+            flNext = true;
+           return currentIndex < size;
         }
 
-        return res;
+ 
+        @Override
+        public T next() {
+            if(!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            return (T) array[currentIndex++];
+        }
+        @Override
+        public void remove() {
+            if(!flNext) {
+                throw new IllegalStateException();
+            }
+            ArrayList.this.remove(--currentIndex);
+            flNext = false;
+        }
+
+        
     }
 
-    private boolean isEqual(Object obj1, Object obj2) {
-        return obj1 == null && obj2 == null || obj1.equals(obj2);
-    }
 }

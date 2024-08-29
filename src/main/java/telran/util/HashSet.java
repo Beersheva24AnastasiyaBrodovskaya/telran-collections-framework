@@ -1,0 +1,165 @@
+package telran.util;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+@SuppressWarnings("unchecked")
+public class HashSet<T> implements Set<T> {
+    private static final int DEFAULT_HASH_TABLE_LENGTH = 16;
+    private static final float DEFAULT_FACTOR = 0.75f;
+    List<T>[] hashTable;
+    float factor;
+    int size;
+    private class HashSetIterator implements Iterator<T> {
+        private Iterator<T> iterator;
+		private Iterator<T> prevIterator;
+		private int iteratorIndex;
+
+		public HashSetIterator() {
+			iteratorIndex = 0;
+			moveToNextNonEmpty();
+		}
+
+        @Override
+        public boolean hasNext(){
+            return iterator != null;
+        }
+
+        @Override
+        public T next(){
+            if (!hasNext()){
+                throw new NoSuchElementException();
+            }
+
+            prevIterator = iterator;
+            T obj = iterator.next();
+            if (!iterator.hasNext()){
+                moveToNextNonEmpty();   
+            }
+
+            return obj;
+        }
+
+        @Override
+        public void remove() {
+            if (prevIterator == null) {
+                throw new IllegalStateException();
+            }
+            prevIterator.remove();
+            prevIterator = null;
+            size--;
+        }
+
+        private void moveToNextNonEmpty() {
+            while ((iterator == null || !iterator.hasNext()) && iteratorIndex < hashTable.length) {
+                List<T> list = hashTable[iteratorIndex++];
+                iterator = (list != null) ? list.iterator() : null;
+            }
+        }
+    }
+
+		
+
+    public HashSet(int hashTableLength, float factor) {
+        hashTable = new List[hashTableLength];
+        this.factor = factor;
+    }
+
+    public HashSet() {
+        this(DEFAULT_HASH_TABLE_LENGTH, DEFAULT_FACTOR);
+    }
+
+    @Override
+    public boolean add(T obj) {
+        boolean res = false;
+        if (!contains(obj)) {
+            res = true;
+            if (size >= hashTable.length * factor) {
+                hashTableReallocation();
+            }
+
+            addObjInHashTable(obj, hashTable);
+            size++;
+        }
+        return res;
+
+    }
+
+    private void addObjInHashTable(T obj, List<T>[] table) {
+        int index = getIndex(obj, table.length);
+        List<T> list = table[index];
+        if (list == null) {
+            list = new ArrayList<>(3);
+            table[index] = list;
+        }
+        list.add(obj);
+    }
+
+    private int getIndex(T obj, int length) {
+        int hashCode = obj.hashCode();
+        return Math.abs(hashCode % length);
+    }
+
+    private void hashTableReallocation() {
+       List<T> []tempTable = new List[hashTable.length * 2];
+       for(List<T> list: hashTable) {
+        if(list != null) {
+            list.forEach(obj -> addObjInHashTable(obj, tempTable));
+            list.clear(); //??? for testing if it doesn't work remove this statement
+        }
+       }
+       hashTable = tempTable;
+
+    }
+
+    @Override
+    public boolean remove(T pattern) {
+        boolean res = contains(pattern);
+		if (res) {
+			int index = getIndex(pattern, hashTable.length);
+			hashTable[index].remove(pattern);
+			size--;
+            if(hashTable[index].isEmpty()) {
+                hashTable[index] = null;
+            }
+		}
+		return res;
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public boolean isEmpty() {
+       return size == 0;
+    }
+
+    @Override
+    public boolean contains(T pattern) {
+        int index = getIndex(pattern, hashTable.length);
+        List<T> list = hashTable[index];
+        return list != null && list.contains(pattern);
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new HashSetIterator();
+    }
+
+    @Override
+    public T get(Object pattern) {
+        T res = null;
+        T tpattern = (T) pattern;
+		if (contains(tpattern)) {
+			int index = getIndex(tpattern, hashTable.length);
+			List<T> list = hashTable[index];
+			int indexInList = list.indexOf(tpattern);
+			res = list.get(indexInList);
+
+		}
+		return res;
+    }
+
+}
