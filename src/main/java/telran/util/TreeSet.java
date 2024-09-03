@@ -122,14 +122,14 @@ public class TreeSet<T> implements Set<T> {
 
     private void removeNode(Node<T> node){
         if(node.left == null || node.right == null){
-            removeWithoutChildren(node);
+            removeNonJunction(node);
         } else {
-            removeWithChildren(node);
+            removeJunction(node);
         }
         size--;
     }
 
-    private void removeWithoutChildren(Node <T> node){
+    private void removeNonJunction(Node <T> node){
         Node<T> child = node.left == null ? node.right : node.left;
         if (node==root){
             addRoot(child);
@@ -146,10 +146,10 @@ public class TreeSet<T> implements Set<T> {
     }
 
 
-    private void removeWithChildren(Node<T> node){
+    private void removeJunction(Node<T> node){
         Node<T> maxNode = getMaxNode(node.left);
         node.obj = maxNode.obj;
-        removeWithoutChildren(maxNode);
+        removeNonJunction(maxNode);
     }
 
     private Node<T> getMinNode(Node<T> node){
