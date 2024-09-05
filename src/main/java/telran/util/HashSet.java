@@ -11,54 +11,59 @@ public class HashSet<T> implements Set<T> {
     float factor;
     int size;
     private class HashSetIterator implements Iterator<T> {
-        private Iterator<T> iterator;
-		private Iterator<T> prevIterator;
-		private int iteratorIndex;
+       Iterator<T> iterator;
+		Iterator<T> prevIterator;
+		int iteratorIndex;
 
-		public HashSetIterator() {
+		HashSetIterator() {
 			iteratorIndex = 0;
-			moveToNextNonEmpty();
+			iterator = getIterator(0);
+			setIteratorIndex();
 		}
 
-        @Override
-        public boolean hasNext(){
-            return iterator != null;
-        }
+		private Iterator<T> getIterator(int index) {
+			List<T> list = hashTable[index];
+			return list == null ? null : list.iterator();
+		}
 
-        @Override
-        public T next(){
-            if (!hasNext()){
-                throw new NoSuchElementException();
-            }
+		@Override
+		public boolean hasNext() {
 
-            prevIterator = iterator;
-            T obj = iterator.next();
-            if (!iterator.hasNext()){
-                moveToNextNonEmpty();   
-            }
+			return iterator != null;
+		}
 
-            return obj;
-        }
+		@Override
+		public T next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			prevIterator = iterator;
+			T res = iterator.next();
+			setIteratorIndex();
+			return res;
+		}
 
-        @Override
-        public void remove() {
-            if (prevIterator == null) {
-                throw new IllegalStateException();
-            }
-            prevIterator.remove();
-            prevIterator = null;
-            size--;
-        }
+		private void setIteratorIndex() {
+            int limit = hashTable.length - 1;
+			while (iteratorIndex < limit && (iterator == null || !iterator.hasNext())) {
+                iterator = getIterator(++iteratorIndex);
+			}
+            if (iteratorIndex == limit && (hashTable[iteratorIndex] == null || !iterator.hasNext())) {
+				iterator = null;
+			}
+			
+		}
+		@Override
+		public void remove() {
+			if(prevIterator == null) {
+				throw new IllegalStateException();
+			}
+			prevIterator.remove();
+			size--;
+			prevIterator = null;
+		}
 
-        private void moveToNextNonEmpty() {
-            while ((iterator == null || !iterator.hasNext()) && iteratorIndex < hashTable.length) {
-                List<T> list = hashTable[iteratorIndex++];
-                iterator = (list != null) ? list.iterator() : null;
-            }
-        }
     }
-
-		
 
     public HashSet(int hashTableLength, float factor) {
         hashTable = new List[hashTableLength];
@@ -105,7 +110,7 @@ public class HashSet<T> implements Set<T> {
        for(List<T> list: hashTable) {
         if(list != null) {
             list.forEach(obj -> addObjInHashTable(obj, tempTable));
-            list.clear(); //??? for testing if it doesn't work remove this statement
+            list.clear(); 
         }
        }
        hashTable = tempTable;
