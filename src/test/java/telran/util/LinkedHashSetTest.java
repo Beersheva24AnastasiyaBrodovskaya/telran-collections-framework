@@ -1,25 +1,20 @@
 package telran.util;
 
-import java.util.Arrays;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 
-public class HashSetTest extends SetTest{
+public class LinkedHashSetTest extends SetTest{
     @BeforeEach
     @Override
     void setUp() {
-        collection = new HashSet<>();
+        collection = new LinkedHashSet<>();
         super.setUp();
     }
     @Override
     protected void runTest(Integer[] expected) {
-        Integer[] expectedSorted = Arrays.copyOf(expected, expected.length);
-        Arrays.sort(expectedSorted);
         Integer[] actual = collection.stream().toArray(Integer[]::new);
-        Arrays.sort(actual);
-        assertArrayEquals(expectedSorted, actual);
+        assertArrayEquals(expected, actual);
         assertEquals(expected.length, collection.size());
     }
 }

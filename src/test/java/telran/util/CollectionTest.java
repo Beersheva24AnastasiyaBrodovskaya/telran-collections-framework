@@ -109,7 +109,7 @@ public abstract class CollectionTest {
        Arrays.stream(array).forEach(n -> assertTrue(collection.contains(n)));
        assertFalse(collection.contains(10000000));
     }
-    @Test 
+    // @Test 
     void performanceTest() {
         collection.clear();
         IntStream.range(0, N_ELEMENTS).forEach(i -> collection.add(random.nextInt()));

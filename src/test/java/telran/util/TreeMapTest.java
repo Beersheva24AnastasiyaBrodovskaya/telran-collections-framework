@@ -2,8 +2,8 @@ package telran.util;
 
 import java.util.Arrays;
 import static java.util.Arrays.sort;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import org.junit.jupiter.api.BeforeEach;
 
 public class TreeMapTest extends AbstractMapTest {

@@ -4,7 +4,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 @SuppressWarnings("unchecked")
-public class TreeSet<T> implements Set<T> {
+public class TreeSet<T> implements SortedSet<T> {
     private static class Node<T> {
         T obj;
         Node<T> parent;
@@ -175,6 +175,17 @@ public class TreeSet<T> implements Set<T> {
 		}
 		return parent;
     }
+
+    private Node<T> getLowerParent(Node<T> node) {
+        Node<T> res = node;
+        while (res.parent != null && res.parent.left == res) {
+            res = res.parent;
+        }
+        return res.parent;
+
+    }
+
+    
 private Node<T> getNextCurrent(Node<T> current) {
 		//Algorithm see on the board
 		return current.right != null ? getLeastFrom(current.right) :
@@ -216,4 +227,60 @@ private Node<T> getNextCurrent(Node<T> current) {
 		node.parent = node.left = node.right = null;
 		
 	}
+
+    @Override
+    public T first() {
+        return getLeastFrom(root).obj;
+    }
+
+    @Override
+    public T last() {
+        return getGreatestFrom(root).obj;
+    }
+
+    @Override
+    public T floor(T key) {
+        Node<T> node = floorNode(key);
+        return node == null ? null : node.obj;
+    
+    }
+
+    private Node<T> floorNode(T key) {
+        Node<T> node = getParentOrNode(key);
+        if (node != null && comparator.compare(key, node.obj) < 0) {
+            node = getLowerParent(node);
+        }
+        return node;
+    }
+
+    @Override
+    public T ceiling(T key) {
+        Node<T> node = ceilingNode(key);
+        return node == null ? null : node.obj;;
+    }
+
+    private Node<T> ceilingNode(T key) {
+        Node<T> node = getParentOrNode(key);
+        if (node != null && comparator.compare(key, node.obj) > 0) {
+            node = getGreaterParent(node);
+        }
+        return node;
+    }
+
+    @Override
+    public SortedSet<T> subSet(T keyFrom, T keyTo) {
+        if (comparator.compare(keyFrom, keyTo) > 0) {
+            throw new IllegalArgumentException();
+        }
+
+        SortedSet<T> subSet = new TreeSet<>(comparator);
+        Node<T> node = ceilingNode(keyFrom);
+        while (node != null && comparator.compare(node.obj, keyTo) < 0) {
+            subSet.add(node.obj);
+            node = getNextCurrent(node);
+        }
+        return subSet;
+    }
+
+
 }
