@@ -1,20 +1,17 @@
 package telran.util;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 public abstract class CollectionTest {
-    private static final int N_ELEMENTS = 2_000_000;
+    protected static final int N_ELEMENTS = 1_048_575;
     protected Collection<Integer> collection;
     Random random = new Random();
     Integer[] array = {3, -10, 20, 1, 10, 8, 100 , 17};
@@ -109,15 +106,17 @@ public abstract class CollectionTest {
        Arrays.stream(array).forEach(n -> assertTrue(collection.contains(n)));
        assertFalse(collection.contains(10000000));
     }
-    // @Test 
+    @Test 
     void performanceTest() {
         collection.clear();
-        IntStream.range(0, N_ELEMENTS).forEach(i -> collection.add(random.nextInt()));
+        fillBigCollection();
         collection.removeIf(n -> n % 2 == 0);
         assertTrue(collection.stream().allMatch(n -> n % 2 != 0));
         collection.clear();
         assertTrue(collection.isEmpty());
     }
-
+    protected void fillBigCollection() {
+        IntStream.range(0, N_ELEMENTS).forEach(i -> collection.add(random.nextInt()));
+    }
 
 }
